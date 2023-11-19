@@ -36,6 +36,9 @@ st.set_page_config(layout='wide')
 ## Title
 st.title('Avocado Sales in US')
 
+# region_list = sorted(dataset3['region'].unique())
+# st.write(np.searchsorted(region_list, "TotalUS").astype(int).dtype)
+
 ## Variable selection
 col1, col2 = st.columns(2)
 with col1:
@@ -55,7 +58,7 @@ with col2:
     select_region = st.selectbox(
             'Select region',
             sorted(dataset3['region'].unique()),
-            index=1,
+            index=51,
             key=3
         )
     select_type = st.selectbox(
@@ -102,7 +105,7 @@ with col1:
 
     bar = alt.Chart(sub_df1).mark_bar().encode(
         y=alt.X("region:N", title="Region", sort='-x'),
-        x=alt.Y("sum(TotalVolume):Q", title="Total Volume"),
+        x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-90)),
         color=alt.Color("type:N", title="Type")
     )
     fig = (bar).configure_axis(
