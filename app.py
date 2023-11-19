@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 
 
 # Get the data
-dataset = pd.read_csv("avocado-prices/avocado.csv")
+dataset = pd.read_csv("avocado-prices/avocado-updated-2020.csv")
 
 
 # Transform and load data
-dataset = dataset.drop(columns=["Unnamed: 0"])
+# dataset = dataset.drop(columns=["Unnamed: 0"])
 dataset["Date"] = dataset["Date"].astype("datetime64[ns]")
 dataset["TotalPrice"] = dataset["Total Volume"] * dataset["AveragePrice"]
 cols = dataset.columns.tolist()
@@ -51,12 +51,12 @@ with col1:
     select_year_to = st.selectbox(
             'Year to',
             sorted(dataset3['year'].unique()),
-            index=3,
+            index=5,
             key=2
         )
 with col2:
     select_region = st.selectbox(
-            'Select region',
+            'Select geography',
             sorted(dataset3['region'].unique()),
             index=51,
             key=3
@@ -85,7 +85,7 @@ avg_price_min = dataset3[
 
 col1, col2 = st.columns([2,3])
 with col1:
-    st.header("Average Price")
+    st.header("Avocado Average Price")
     col3, col4, col5 = st.columns(3)
     with col3:
         st.metric("Lowest", round(avg_price_min,2))
@@ -98,20 +98,20 @@ with col1:
     sub_df1 = dataset3[
         (dataset3["year"]<=select_year_to) 
         & (dataset3["year"]>=select_year_from)  
-        & (dataset3["region"]!="TotalUS")
+        & (dataset3["region"]!="Total U.S.")
         & (dataset3["type"]!="all")][["region","type","TotalVolume"]]
     sub_df1 = sub_df1.groupby(["region","type"])["TotalVolume"].sum()
     sub_df1 = pd.DataFrame(sub_df1).reset_index()
 
     bar = alt.Chart(sub_df1).mark_bar().encode(
-        y=alt.X("region:N", title="Region", sort='-x'),
+        y=alt.X("region:N", title="Geography", sort='-x'),
         x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-90)),
         color=alt.Color("type:N", title="Type")
     )
     fig = (bar).configure_axis(
                 labelFontSize=10
             ).properties(
-                title='Sales by Region',
+                title='Avocado Sales Volume by Geography',
                 width=500,
                 height=1200
             )
@@ -135,7 +135,7 @@ with col2:
         fig = (pie).configure_axis(
                     labelFontSize=10
                 ).properties(
-                    title='Sales by type',
+                    title='Avocado Sales Volume by Type',
                     width=400,
                     height=400
                 )
@@ -160,7 +160,7 @@ with col2:
         fig = (pie).configure_axis(
                     labelFontSize=10
                 ).properties(
-                    title='Sales by size',
+                    title='Avocado Sales Volume by Size',
                     width=400,
                     height=400
                 )
@@ -177,12 +177,12 @@ with col2:
 
     line1 = alt.Chart(sub_df4).mark_line().encode(
         x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
-        y=alt.Y("sum(TotalVolume):Q", title="Total Volume Avocado Sold")
+        y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold")
     )
     fig = (line1).configure_axis(
                 labelFontSize=10
             ).properties(
-                title='Sales by History',
+                title=('Avocado Sales Volume History'),
                 width=800,
                 height=400
             )
