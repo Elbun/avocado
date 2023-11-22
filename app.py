@@ -97,7 +97,7 @@ with tab1:
         with col5:
             st.metric("Latest", round(avg_price_today,2))
 
-        ## Chart
+        ## Chart 1
         sub_df1 = dataset3[
             (dataset3["year"]<=select_year_to) 
             & (dataset3["year"]>=select_year_from)  
@@ -108,7 +108,7 @@ with tab1:
 
         bar = alt.Chart(sub_df1).mark_bar().encode(
             y=alt.X("region:N", title="Geography", sort='-x'),
-            x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-90)),
+            x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-45)),
             color=alt.Color("type:N", title="Type")
         )
         fig = (bar).configure_axis(
@@ -215,68 +215,68 @@ with tab1:
 
 
 
-# Dashboard
+# Sales Trend Analysis
 with tab2:
     ## Title
     st.title('Sales Trend Analysis')
 
-    ## Chart 6
-    sub_df6 = dataset3[
-        (dataset3["region"]=="Total U.S.")
-        & (dataset3["type"]=="all")][["Date","region","type","TotalVolume"]]
-    sub_df6 = sub_df6.groupby(["Date"])["TotalVolume"].sum()
-    sub_df6 = pd.DataFrame(sub_df6).reset_index()
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 6
+        sub_df6 = dataset3[
+            (dataset3["region"]=="Total U.S.")
+            & (dataset3["type"]=="all")][["Date","region","type","TotalVolume"]]
+        sub_df6 = sub_df6.groupby(["Date"])["TotalVolume"].sum()
+        sub_df6 = pd.DataFrame(sub_df6).reset_index()
 
-    line3 = alt.Chart(sub_df6).mark_line().encode(
-        x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
-        y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold")
-    )
-    fig = (line3).configure_axis(
-                labelFontSize=10
-            ).properties(
-                title=('Avocado Sales Volume History'),
-                width=1300,
-                height=400
-            )
-    st.altair_chart(fig)
+        line3 = alt.Chart(sub_df6).mark_line().encode(
+            x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
+            y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold")
+        )
+        fig = (line3).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume History'),
+                    width=800,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            At a glance, sales of avocados in US has an uptrend since 2015. The sales pattern tends to increase from beginning 
+            of the year until mid year. Then it tends to decrease until the end of year. This pattern repeats every year.
+        ''')
 
-    st.write('''
-        At a glance, sales of avocados in US has an uptrend since 2015. The sales pattern also repeats every year. Let's find out
-        how the pattern repeats and when do the sales peak occur every year.
-    ''')
+    col1, col2 = st.columns([3,2])
+    with col1:
+        # Chart 7
+        sub_df7 = dataset3[
+            (dataset3["region"]=="Total U.S.")
+            & (dataset3["type"]=="all")][["Date","year","region","type","TotalVolume"]]
+        sub_df7["month_date"] = sub_df7["Date"].dt.strftime('%m/%d')
+        sub_df7["month_num"] = sub_df7["Date"].dt.strftime('%m').astype(int)
+        sub_df7["month_name"] = sub_df7["Date"].dt.month_name()
 
-    st.write('''
-        First, let's see how many monthly sales had happened every year.
-    ''')
+        line4 = alt.Chart(sub_df7).mark_line().encode(
+            x=alt.X("month_date:O", title="Month/Date", axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold"),
+            color="year:N"
+        )
+        fig = (line4).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume Comparison'),
+                    width=800,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            If the sales pattern is rearrenged as beside, it shows the high sales peak.
+            There are two high sales peaks happen every year, on around early February and early May.
+            Meanwhile, sales is at the lowest on around late November.
+        ''')
 
-    # Chart 7a (table preparation)
-    sub_df7 = dataset3[
-        (dataset3["region"]=="Total U.S.")
-        & (dataset3["type"]=="all")][["Date","year","region","type","TotalVolume"]]
-    sub_df7["month_num"] = sub_df7["Date"].dt.strftime('%m').astype(int)
-    sub_df7["month_name"] = sub_df7["Date"].dt.month_name()
-    sub_df7
-
-    # Chart 8 (table preview)
-    sub_df8 = sub_df7.groupby(["year","month_num","month_name"])["TotalVolume"].sum().reset_index()
-    sub_df8 = sub_df8.pivot(index=["month_num","month_name"], columns="year", values="TotalVolume").reset_index()
-    sub_df8 = sub_df8.drop(columns=["month_num"])
-    sub_df8
-
-    # Chart 7b (chart preview)
-    line4 = alt.Chart(sub_df7).mark_line().encode(
-        x=alt.X("month_num:O", title="Month", axis=alt.Axis(labelAngle=-45)),
-        y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold"),
-        color="year:N"
-    )
-    fig = (line4).configure_axis(
-                labelFontSize=10
-            ).properties(
-                title=('Avocado Sales Volume Comparison'),
-                width=1300,
-                height=400
-            )
-    st.altair_chart(fig)
     
 
 # st.write('Year from selected:', select_year_from)
