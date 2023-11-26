@@ -32,7 +32,7 @@ dataset3= dataset3.rename(columns={"Total Volume": "TotalVolume"})
 st.set_page_config(layout='wide')
 
 
-tab1, tab2, tab3 = st.tabs(["Dashboard", "Sales Trend Analysis", "Avocado Apocalypse"])
+tab1, tab2, tab3 = st.tabs(["Dashboard", "Sales & Price Analysis", "Avocado Apocalypse"])
 
 # Dashboard
 with tab1:
@@ -149,9 +149,9 @@ with tab1:
                 (dataset3["year"]<=select_year_to) 
                 & (dataset3["year"]>=select_year_from)  
                 & (dataset3["region"]==select_region)
-                & (dataset3["type"]!="all")][["region","4046","4225","4770"]]
-            sub_df3 = sub_df3.groupby(["region"])[["4046","4225","4770"]].sum()
-            sub_df3= sub_df3.rename(columns={"4046": "4046 (~3-5 oz)", "4225":"4225 (~8-10 oz)", "4770":"4770 (~10-15 oz)"})
+                & (dataset3["type"]!="all")][["region","4046","4225","4770","Total Bags"]]
+            sub_df3 = sub_df3.groupby(["region"])[["4046","4225","4770","Total Bags"]].sum()
+            sub_df3= sub_df3.rename(columns={"4046": "4046 (~3-5 oz)", "4225":"4225 (~8-10 oz)", "4770":"4770 (~10-15 oz)", "Total Bags":"Other"})
             sub_df3 = pd.melt(sub_df3)
             sub_df3= sub_df3.rename(columns={"variable": "size", "value":"TotalVolume"})
             sub_df3 = pd.DataFrame(sub_df3).reset_index()
@@ -215,10 +215,10 @@ with tab1:
 
 
 
-# Sales Trend Analysis
+# Sales & Price Analysis
 with tab2:
     ## Title
-    st.title('Sales Trend Analysis')
+    st.title('Sales & Price Analysis')
 
     col1, col2 = st.columns([3,2])
     with col1:
@@ -243,8 +243,9 @@ with tab2:
         st.altair_chart(fig)
     with col2:
         st.write('''
-            At a glance, sales of avocados in US has an uptrend since 2015. The sales pattern tends to increase from beginning 
-            of the year until mid year. Then it tends to decrease until the end of year. This pattern repeats every year.
+            At a glance, sales of oraganic and conventional avocados in US has an uptrend since 2015. 
+            The sales pattern tends to increase from beginning of the year until mid year. 
+            Then it tends to decrease until the end of year. This pattern repeats every year.
         ''')
 
     col1, col2 = st.columns([3,2])
@@ -265,7 +266,7 @@ with tab2:
         fig = (line4).configure_axis(
                     labelFontSize=10
                 ).properties(
-                    title=('Avocado Sales Volume Comparison'),
+                    title=('Avocado Annual Sales Volume Comparison'),
                     width=800,
                     height=400
                 )
@@ -277,32 +278,139 @@ with tab2:
             Meanwhile, sales is at the lowest on around late November.
         ''')
 
-    
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 12
+        sub_df12 = dataset3[
+            (dataset3["year"]<=2020) 
+            & (dataset3["year"]>=2015)  
+            & (dataset3["region"]!="Total U.S.")
+            & (dataset3["type"]=="all")][["region","type","TotalVolume"]]
+        sub_df12 = sub_df12.groupby(["region","type"])["TotalVolume"].sum()
+        sub_df12 = pd.DataFrame(sub_df12).reset_index().sort_values("TotalVolume", ascending=False).head(8)
+        topn_region = sub_df12["region"]
 
-# st.write('Year from selected:', select_year_from)
-# st.write('Year to selected:', select_year_to)
-# st.write('Region selected:', select_region)
-# st.write('Type selected:', select_type)
-# st.write('Last date:', dataset3[dataset3["year"]==select_year_to]["Date"].max())
-# st.write('Last avg price:', avg_price_today)
-# st.write('Max price:', avg_price_max)
-# st.write('Min price:', avg_price_min)
-# st.write('Total Volume:', dataset3[
-#     (dataset3["year"]<=select_year_to) 
-#     & (dataset3["year"]>=select_year_from)  
-#     & (dataset3["region"]=="All Region")
-#     & (dataset3["type"]!="all")][["region","type","TotalVolume"]].groupby(["region","type"])["TotalVolume"].sum())
+        bar = alt.Chart(sub_df12).mark_bar().encode(
+            y=alt.X("region:N", title="Geography", sort='-x'),
+            x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-45))
+        )
+        fig = (bar).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title='Avocado Sales Volume by Geography',
+                    width=800,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Top N regioin by sales
+        ''')
 
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 8
+        sub_df8 = dataset3[
+            (dataset3["region"]=="Total U.S.")
+            & (dataset3["type"]!="all")][["Date","region","type","TotalVolume"]]
+        sub_df8 = sub_df8.groupby(["Date","type"])["TotalVolume"].sum()
+        sub_df8 = pd.DataFrame(sub_df8).reset_index()
 
+        line1 = alt.Chart(sub_df8).mark_line().encode(
+            x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
+            y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold"),
+            color="type:N"
+        )
+        fig = (line1).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume History by Type'),
+                    width=800,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Tren sales yang naik didiominasi oleh conventional. Sekitar xx% sales adalah conventional
+        ''')
 
-# # Visualization using streamlit
-# st.write('''
-#     QS World University Rankings include almost 1,500 institutions or universities from around the world. 
-#     It's not just iconic institutions that take the top spots. There are universities from 
-#     diverse locations across Europe, Asia and North America. The rankings are the fast and 
-#     easy way to compare institutions on a host of 8 different criteria: from academic reputation 
-#     to the number of international students enrolled. 
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 10
+        sub_df10 = dataset3[
+            (dataset3["region"]=="Total U.S.")
+            & (dataset3["type"]!="all")][["Date","region","type","AveragePrice"]]
+        sub_df10 = sub_df10.groupby(["Date","type"])["AveragePrice"].sum()
+        sub_df10 = pd.DataFrame(sub_df10).reset_index()
 
-#     Now let's look at these universities.
-# ''')
-# st.write(dataset3.head(10))
+        line1 = alt.Chart(sub_df10).mark_line().encode(
+            x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
+            y=alt.Y("sum(AveragePrice):Q", title="Total Volume Sold"),
+            color="type:N"
+        )
+        fig = (line1).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Average Price History by Type'),
+                    width=800,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Tren harga alpukat
+        ''')
+
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 11
+        sub_df11 = dataset3[
+            ((dataset3["region"]=="Total U.S.") | (dataset3["region"].isin(topn_region)))
+            & (dataset3["type"]!="all")][["Date","region","type","year","AveragePrice"]]
+        sub_df11 = pd.DataFrame(sub_df11).reset_index()
+
+        box1 = alt.Chart(sub_df11).mark_boxplot(extent='min-max', size=20).encode(
+            x=alt.X("type:N"),
+            y=alt.Y("AveragePrice:Q", title="Average Price"),
+            color="type:N",
+            column=alt.Column('region:N')
+        )
+        fig = (box1).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Average Price Comparison'),
+                    width=50,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Perbandingan harga rata-rata
+        ''')
+
+    col1, col2 = st.columns([3,2])
+    with col1:
+        ## Chart 9
+        sub_df9 = dataset3[
+            (dataset3["region"]=="Total U.S.")
+            & (dataset3["type"]!="all")][["Date","region","type","TotalVolume","AveragePrice"]]
+        sub_df9 = sub_df9.groupby(["Date","type"])[["TotalVolume","AveragePrice"]].sum()
+        sub_df9 = pd.DataFrame(sub_df9).reset_index()
+
+        scatter1 = alt.Chart(sub_df9).mark_circle(size=20).encode(
+            x=alt.X("AveragePrice:Q", title="Total Volume Sold", axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("TotalVolume:Q", title="Average Price Sold"),
+            column="type:N"
+        )
+        fig = (scatter1).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume vs Price Elasticity'),
+                    width=300,
+                    height=300
+                )
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Elastisitas penjualan
+        ''')
