@@ -32,7 +32,7 @@ dataset3= dataset3.rename(columns={"Total Volume": "TotalVolume"})
 st.set_page_config(layout='wide')
 
 
-tab1, tab2, tab3 = st.tabs(["Dashboard", "Sales & Price Analysis", "Avocado Apocalypse"])
+tab1, tab2 = st.tabs(["Dashboard", "Sales & Price Analysis"])
 
 # Dashboard
 with tab1:
@@ -85,10 +85,17 @@ with tab1:
         & (dataset3["year"]>=select_year_from)  
         & (dataset3["region"]==select_region)
         & (dataset3["type"]==select_type)]["AveragePrice"].min()
+    total_volume = dataset3[
+        (dataset3["year"]<=select_year_to) 
+        & (dataset3["year"]>=select_year_from)  
+        & (dataset3["region"]==select_region)
+        & (dataset3["type"]==select_type)]["TotalVolume"].sum()
 
+    
     col1, col2 = st.columns([2,3])
     with col1:
         st.header("Avocado Average Price")
+        st.metric("Total Volume", f'{round(total_volume,0):,}')
         col3, col4, col5 = st.columns(3)
         with col3:
             st.metric("Lowest", round(avg_price_min,2))
@@ -277,36 +284,7 @@ with tab2:
             There are two high sales peaks happen every year, on around early February and early May.
             Meanwhile, sales is at the lowest on around late November.
         ''')
-
-    col1, col2 = st.columns([3,2])
-    with col1:
-        ## Chart 12
-        sub_df12 = dataset3[
-            (dataset3["year"]<=2020) 
-            & (dataset3["year"]>=2015)  
-            & (dataset3["region"]!="Total U.S.")
-            & (dataset3["type"]=="all")][["region","type","TotalVolume"]]
-        sub_df12 = sub_df12.groupby(["region","type"])["TotalVolume"].sum()
-        sub_df12 = pd.DataFrame(sub_df12).reset_index().sort_values("TotalVolume", ascending=False).head(8)
-        topn_region = sub_df12["region"]
-
-        bar = alt.Chart(sub_df12).mark_bar().encode(
-            y=alt.X("region:N", title="Geography", sort='-x'),
-            x=alt.Y("sum(TotalVolume):Q", title="Total Volume", axis=alt.Axis(labelAngle=-45))
-        )
-        fig = (bar).configure_axis(
-                    labelFontSize=10
-                ).properties(
-                    title='Avocado Sales Volume by Geography',
-                    width=800,
-                    height=400
-                )
-        st.altair_chart(fig)
-    with col2:
-        st.write('''
-            Top N regioin by sales
-        ''')
-
+        
     col1, col2 = st.columns([3,2])
     with col1:
         ## Chart 8
@@ -331,7 +309,113 @@ with tab2:
         st.altair_chart(fig)
     with col2:
         st.write('''
-            Tren sales yang naik didiominasi oleh conventional. Sekitar xx% sales adalah conventional
+            There are two types of avocado sold in US, conventional and organic. 
+            This sales uptrend is dominated by the conventional type. 
+            Over 95% avocado sales in US are from this type.
+        ''')
+
+    ## Chart 12
+    sub_df12 = dataset3[
+        (dataset3["year"]<=2020) 
+        & (dataset3["year"]>=2015)  
+        & (dataset3["region"]!="Total U.S.")
+        & (dataset3["type"]=="all")][["region","type","TotalVolume"]]
+    sub_df12 = sub_df12.groupby(["region","type"])["TotalVolume"].sum()
+    sub_df12 = pd.DataFrame(sub_df12).reset_index().sort_values("TotalVolume", ascending=False)
+    sub_df12["cumperc"] = sub_df12["TotalVolume"].cumsum()/sub_df12["TotalVolume"].sum()
+    sub_df12 = sub_df12.sort_values("cumperc", ascending=True)
+    sort_order = sub_df12["region"].tolist()
+    topn_region = sub_df12[sub_df12["cumperc"]<=0.81]
+    topn_region = topn_region["region"]
+
+    base = alt.Chart(sub_df12).encode(
+            x = alt.X("region:O",sort=sort_order),
+        ).properties(
+            width = 1300
+        )
+    bars = base.mark_bar(size = 15).encode(
+            y = alt.Y("TotalVolume:Q"),
+        ).properties(
+            width = 1300
+        )
+    line = base.mark_line(
+            strokeWidth= 2,
+            color = "#cb4154" 
+        ).encode(
+            y=alt.Y('cumperc:Q', title='Cumulative Sum', axis=alt.Axis(format=".0%")),
+            text = alt.Text('cumperc:Q')
+        )
+    points = base.mark_circle(
+            strokeWidth= 3,
+            color = "#cb4154" 
+        ).encode(
+            y=alt.Y('cumperc:Q', axis=None)
+        )
+    
+    fig = (bars+line+points).configure_axis(
+                labelFontSize=10
+            ).properties(
+                title='Avocado Sales Volume by Geography',
+                width=1300,
+                height=500
+            ).resolve_scale(y='independent')
+    st.altair_chart(fig)
+    
+    col1, col2 = st.columns([3,2])
+    with col1:
+        # Chart 13
+        sub_df13 = sub_df12[sub_df12["region"].isin(topn_region)]
+
+        base = alt.Chart(sub_df13).encode(
+                y = alt.X("region:O",sort=sort_order),
+            ).properties(
+                width = 800
+            )
+        bars = base.mark_bar(size = 15).encode(
+                x = alt.Y("TotalVolume:Q"),
+            ).properties(
+                width = 800
+            )
+        line = base.mark_line(
+                strokeWidth= 2,
+                color = "#cb4154" 
+            ).encode(
+                x=alt.Y('cumperc:Q', title='Cumulative Sum', axis=alt.Axis(format=".0%")),
+                text = alt.Text('cumperc:Q')
+            )
+        points = base.mark_circle(
+                strokeWidth= 3,
+                color = "#cb4154" 
+            ).encode(
+                x=alt.Y('cumperc:Q', axis=None)
+            )
+        point_text = points.mark_text(
+                align='left',
+                baseline='middle',
+                dx=-10, 
+                dy = -10,
+            ).encode(
+                x=alt.Y('cumperc:Q', axis=None),
+                text=alt.Text('cumperc:Q', format="0.0%"),
+                color= alt.value("#cb4154")
+            )
+        
+        fig = (bars+line+points+point_text).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title='Avocado Sales Volume by Geography (in 80% sales)',
+                    width=800,
+                    height=500
+                ).resolve_scale(x='independent')
+        st.altair_chart(fig)
+    with col2:
+        st.write('''
+            Let's breakdown the sales by its region. West has the most sales among the other region.
+            Its sales contribute 10.8% sales of all sales in US. On the second and third place there are South Central and California.
+            These 3 regions each has contribute in sales over 10%. 
+                 
+            Use the pareto principle, then there will be 17 regions that contribute 80% sales of all sales in US.
+                 
         ''')
 
     col1, col2 = st.columns([3,2])
@@ -345,7 +429,7 @@ with tab2:
 
         line1 = alt.Chart(sub_df10).mark_line().encode(
             x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
-            y=alt.Y("sum(AveragePrice):Q", title="Total Volume Sold"),
+            y=alt.Y("sum(AveragePrice):Q", title="Average Price"),
             color="type:N"
         )
         fig = (line1).configure_axis(
@@ -359,13 +443,17 @@ with tab2:
     with col2:
         st.write('''
             Tren harga alpukat
+            
+            harga organic > conv
+                
+            Peak harga di bulan oktober
         ''')
 
     col1, col2 = st.columns([3,2])
     with col1:
         ## Chart 11
         sub_df11 = dataset3[
-            ((dataset3["region"]=="Total U.S.") | (dataset3["region"].isin(topn_region)))
+            ((dataset3["region"]=="Total U.S.") | (dataset3["region"].isin(topn_region.head(8))))       # atur jumlah region
             & (dataset3["type"]!="all")][["Date","region","type","year","AveragePrice"]]
         sub_df11 = pd.DataFrame(sub_df11).reset_index()
 
@@ -413,4 +501,10 @@ with tab2:
     with col2:
         st.write('''
             Elastisitas penjualan
+                 
+            apakah harga mempengaruhi penjualan?
+            
+            di setiap region?
+                 
+            seberapa besar pengaruhnya?
         ''')
