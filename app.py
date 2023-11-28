@@ -227,6 +227,8 @@ with tab2:
     ## Title
     st.title('Sales & Price Analysis')
 
+    st.header("Avocado Sales Volume")
+
     col1, col2 = st.columns([3,2])
     with col1:
         ## Chart 6
@@ -285,26 +287,53 @@ with tab2:
             Meanwhile, sales is at the lowest on around late November.
         ''')
         
+    ## Chart 8
+    sub_df8 = dataset3[
+        (dataset3["region"]=="Total U.S.")
+        & (dataset3["type"]!="all")][["Date","region","type","TotalVolume"]]
+    sub_df8 = sub_df8.groupby(["Date","type"])["TotalVolume"].sum()
+    sub_df8 = pd.DataFrame(sub_df8).reset_index()
+
+    line1 = alt.Chart(sub_df8).mark_line().encode(
+        x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
+        y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold"),
+        color="type:N"
+    )
+    fig = (line1).configure_axis(
+                labelFontSize=10
+            ).properties(
+                title=('Avocado Sales Volume History by Type'),
+                width=1300,
+                height=500
+            )
+    st.altair_chart(fig)
+        
     col1, col2 = st.columns([3,2])
     with col1:
-        ## Chart 8
-        sub_df8 = dataset3[
+        ## Chart 14
+        sub_df14 = dataset3[
             (dataset3["region"]=="Total U.S.")
-            & (dataset3["type"]!="all")][["Date","region","type","TotalVolume"]]
-        sub_df8 = sub_df8.groupby(["Date","type"])["TotalVolume"].sum()
-        sub_df8 = pd.DataFrame(sub_df8).reset_index()
+            & (dataset3["type"]!="all")][["Date","region","type","year","TotalVolume"]]
+        sub_df14 = sub_df14.groupby(["year","type"])["TotalVolume"].sum()
+        sub_df14 = pd.DataFrame(sub_df14).reset_index()
+        sub_df14a = sub_df14.groupby(["year"])["TotalVolume"].sum()
+        sub_df14a = pd.DataFrame(sub_df14a).reset_index()
+        sub_df14a= sub_df14a.rename(columns={"TotalVolume": "Percentage"})
+        sub_df14 = sub_df14.merge(sub_df14a, on="year", how="left")
+        sub_df14["Percentage"] = sub_df14["TotalVolume"] / sub_df14["Percentage"]
 
-        line1 = alt.Chart(sub_df8).mark_line().encode(
-            x=alt.X("Date:T", title="Date", axis=alt.Axis(format="%Y-%m-%d", labelAngle=-45)),
-            y=alt.Y("sum(TotalVolume):Q", title="Total Volume Sold"),
-            color="type:N"
+        bar = alt.Chart(sub_df14).mark_bar().encode(
+            x=alt.X("type:N", title="Type", sort='x', axis=None),
+            y=alt.Y("sum(TotalVolume):Q", title="Total Volume"),
+            color=alt.Color("type:N", title="Type"),
+            column="year:O"
         )
-        fig = (line1).configure_axis(
+        fig = (bar).configure_axis(
                     labelFontSize=10
                 ).properties(
-                    title=('Avocado Sales Volume History by Type'),
-                    width=800,
-                    height=400
+                    title=('Annual Avocado Sales Volume by Type'),
+                    width=75,
+                    height=200
                 )
         st.altair_chart(fig)
     with col2:
@@ -418,6 +447,8 @@ with tab2:
                  
         ''')
 
+    st.header("Avocado Average Price")
+
     col1, col2 = st.columns([3,2])
     with col1:
         ## Chart 10
@@ -442,11 +473,10 @@ with tab2:
         st.altair_chart(fig)
     with col2:
         st.write('''
-            Tren harga alpukat
-            
-            harga organic > conv
-                
-            Peak harga di bulan oktober
+            Chart beside illustrate the avocado average price history by its type.
+            It shows that average price for the organic type is higher than the conventional type.
+            The price of conventional type move around 0.8 until 1.6, while the price of the organic type
+            move higher (around 1.2 until 2.1)
         ''')
 
     col1, col2 = st.columns([3,2])
@@ -458,7 +488,7 @@ with tab2:
         sub_df11 = pd.DataFrame(sub_df11).reset_index()
 
         box1 = alt.Chart(sub_df11).mark_boxplot(extent='min-max', size=20).encode(
-            x=alt.X("type:N"),
+            x=alt.X("type:N", axis=None),
             y=alt.Y("AveragePrice:Q", title="Average Price"),
             color="type:N",
             column=alt.Column('region:N')
@@ -473,7 +503,13 @@ with tab2:
         st.altair_chart(fig)
     with col2:
         st.write('''
-            Perbandingan harga rata-rata
+            From the chart before, region can be ranked by its avocado sales volume. 
+            The top 8 region with the highest sales are West, South Central, California, Northeast, Southeast,
+            Great Lakes, Midsouth, and Los Angeles.
+            
+            This chart shows distribution of avocado average price in top 8 region and Total U.S. in overall.
+            The median of organic type average price in all region always higher than conventional type average price.
+            The median of average price in Total U.S. is 1.55 for organic type and 1.05 for conventional type.
         ''')
 
     col1, col2 = st.columns([3,2])
