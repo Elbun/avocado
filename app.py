@@ -521,26 +521,70 @@ with tab2:
         sub_df9 = sub_df9.groupby(["Date","type"])[["TotalVolume","AveragePrice"]].sum()
         sub_df9 = pd.DataFrame(sub_df9).reset_index()
 
-        scatter1 = alt.Chart(sub_df9).mark_circle(size=20).encode(
+        scatter1 = alt.Chart(sub_df9).mark_point(size=20).encode(
             x=alt.X("AveragePrice:Q", title="Total Volume Sold", axis=alt.Axis(labelAngle=-45)),
             y=alt.Y("TotalVolume:Q", title="Average Price Sold"),
-            column="type:N"
+            color="type:N"
         )
         fig = (scatter1).configure_axis(
                     labelFontSize=10
                 ).properties(
-                    title=('Avocado Sales Volume vs Price Elasticity'),
-                    width=300,
-                    height=300
+                    title=('Avocado Sales Volume vs Price'),
+                    width=800,
+                    height=400
                 )
         st.altair_chart(fig)
     with col2:
         st.write('''
-            Elastisitas penjualan
+            Now see how the average price of avocado affect the volume sold.
+            The graph shows the distribution of price-volume data pairs.
+            At glance, the conventional type has a negative correlation and the organic type has a flatter pattern.
+            But this view is still affected by the axis scale.
+            Let's see these patterns in separeted chart.
+        ''')
+
+    col1, col2, col3 = st.columns([3,3,4])
+    with col1:
+        ## Chart 15a
+        scatter15a = alt.Chart(sub_df9[sub_df9["type"]=="conventional"]).mark_point(size=20).encode(
+            x=alt.X("AveragePrice:Q", title="Total Volume Sold", axis=alt.Axis(labelAngle=-45)).scale(zero=False),
+            y=alt.Y("TotalVolume:Q", title="Average Price Sold").scale(zero=False)
+        )
+        final_plot = scatter15a + scatter15a.transform_regression("AveragePrice","TotalVolume").mark_line(color="red")
+        fig = (final_plot).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume vs Price (Conventional Type)'),
+                    width=400,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col2:
+        ## Chart 15b
+        scatter15a = alt.Chart(sub_df9[sub_df9["type"]=="organic"]).mark_point(size=20).encode(
+            x=alt.X("AveragePrice:Q", title="Total Volume Sold", axis=alt.Axis(labelAngle=-45)).scale(zero=False),
+            y=alt.Y("TotalVolume:Q", title="Average Price Sold").scale(zero=False)
+        )
+        final_plot = scatter15a + scatter15a.transform_regression("AveragePrice","TotalVolume").mark_line(color="red")
+        fig = (final_plot).configure_axis(
+                    labelFontSize=10
+                ).properties(
+                    title=('Avocado Sales Volume vs Price (Organic Type)'),
+                    width=400,
+                    height=400
+                )
+        st.altair_chart(fig)
+    with col3:
+        st.write('''
+            Separate the data into one type each graph like charts beside.
+            The pattern from these charts is not much different from the chart above.
+            Red lines show the regression line of the data.
+            Conventional and organic type both have negative slope of regression line.
+            It meams the higher average price of avocado, the less amount volume sold of avocado.
                  
-            apakah harga mempengaruhi penjualan?
-            
-            di setiap region?
-                 
-            seberapa besar pengaruhnya?
+            The organic type has flatter regression line (m = xxx) compared to the conventional type (m = xxx).
+            In elasticity term, the organic type is more elastic than the conventional type.
+            A little price change in organic type has more effect on volume sold.
+            The xx% change of price in organic type will affect in xx% change of volume sold,
+            while in conventional type, the xx% change of price will affect in xx% change of volume sold.
         ''')
