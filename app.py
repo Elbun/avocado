@@ -580,11 +580,9 @@ with tab2:
             The pattern from these charts is not much different from the chart above.
             Red lines show the regression line of the data.
             Conventional and organic type both have negative slope of regression line.
-            It meams the higher average price of avocado, the less amount volume sold of avocado.
+            It means the higher average price of avocado, the less amount volume sold of avocado.
                  
-            The organic type has flatter regression line (m = xxx) compared to the conventional type (m = xxx).
+            The organic type has flatter regression line compared to the conventional type's.
             In elasticity term, the organic type is more elastic than the conventional type.
             A little price change in organic type has more effect on volume sold.
-            The xx% change of price in organic type will affect in xx% change of volume sold,
-            while in conventional type, the xx% change of price will affect in xx% change of volume sold.
         ''')
