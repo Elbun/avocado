@@ -32,7 +32,7 @@ dataset3= dataset3.rename(columns={"Total Volume": "TotalVolume"})
 st.set_page_config(layout='wide')
 
 
-tab1, tab2 = st.tabs(["Dashboard", "Sales & Price Analysis"])
+tab1, tab2, tab3 = st.tabs(["Dashboard", "Sales & Price Analysis", "Reference"])
 
 # Dashboard
 with tab1:
@@ -586,3 +586,8 @@ with tab2:
             In elasticity term, the organic type is more elastic than the conventional type.
             A little price change in organic type has more effect on volume sold.
         ''')
+
+with tab3:
+    # Link to source data
+    st.write("Data collected from Kaggle : Avocado Prices (2020)")
+    st.link_button("Link", "https://www.kaggle.com/datasets/timmate/avocado-prices-2020")
